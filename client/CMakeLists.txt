@@ -6,7 +6,7 @@ add_executable(file_upload_client
 
 target_link_libraries(file_upload_client PRIVATE
   proto_lib
-  gRPC::grpc++
+  grpc++
   Threads::Threads
 )
 

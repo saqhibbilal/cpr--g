@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 project(GGrpc VERSION 1.0.0 LANGUAGES CXX)
 
+# Set policy to handle older CMake requirements in dependencies
+if(POLICY CMP0141)
+  cmake_policy(SET CMP0141 NEW)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -11,27 +16,19 @@ option(BUILD_SERVER "Build the server executable" ON)
 # Include FetchContent module
 include(FetchContent)
 
-# Fetch and configure gRPC
+# Fetch and configure gRPC (it bundles protobuf)
 FetchContent_Declare(
   grpc
   GIT_REPOSITORY https://github.com/grpc/grpc.git
   GIT_TAG v1.60.0
 )
 
-# Fetch and configure Protobuf
-FetchContent_Declare(
-  protobuf
-  GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-  GIT_TAG v25.1
-)
-
-# Make protobuf available
-set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(protobuf)
-
-# Make gRPC available
+# Make gRPC available (this will also make protobuf available)
 set(gRPC_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(gRPC_BUILD_GRPC_CPP_PLUGIN ON CACHE BOOL "" FORCE)
+set(gRPC_USE_PROTO_LITE OFF CACHE BOOL "" FORCE)
+set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
+set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(grpc)
 
 # Find required packages
@@ -49,13 +46,13 @@ set(GRPC_HDRS "${CMAKE_CURRENT_BINARY_DIR}/file_upload.grpc.pb.h")
 
 add_custom_command(
   OUTPUT "${PROTO_SRCS}" "${PROTO_HDRS}" "${GRPC_SRCS}" "${GRPC_HDRS}"
-  COMMAND ${protobuf_PROTOC_EXECUTABLE}
+  COMMAND protobuf::protoc
   ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
     --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
     -I "${PROTO_DIR}"
-    --plugin=protoc-gen-grpc="${gRPC_CPP_PLUGIN_EXECUTABLE}"
+    --plugin=protoc-gen-grpc=$<TARGET_FILE:grpc_cpp_plugin>
     "${PROTO_FILES}"
-  DEPENDS "${PROTO_FILES}"
+  DEPENDS "${PROTO_FILES}" protobuf::protoc grpc_cpp_plugin
 )
 
 # Create proto library
@@ -68,8 +65,8 @@ add_library(proto_lib
 
 target_link_libraries(proto_lib PUBLIC
   protobuf::libprotobuf
-  gRPC::grpc++
-  gRPC::grpc++_reflection
+  grpc++
+  grpc++_reflection
 )
 
 target_include_directories(proto_lib PUBLIC
