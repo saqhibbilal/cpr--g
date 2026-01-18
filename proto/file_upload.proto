@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package fileupload;
+
+// Service for uploading files via chunk streaming
+service FileUploadService {
+  // Client-side streaming RPC: client streams chunks, server responds once
+  rpc UploadFile(stream FileChunk) returns (UploadResponse);
+}
+
+// A chunk of file data, with optional metadata in the first chunk
+message FileChunk {
+  // Metadata (only present in the first chunk)
+  optional FileMetadata metadata = 1;
+  
+  // Binary chunk data
+  bytes data = 2;
+  
+  // Sequence number (optional, for validation)
+  optional uint32 sequence_number = 3;
+}
+
+// File metadata sent in the first chunk
+message FileMetadata {
+  // Original filename
+  string filename = 1;
+  
+  // Total file size in bytes
+  uint64 total_size = 2;
+  
+  // Chunk size used by client
+  uint32 chunk_size = 3;
+}
+
+// Server response after receiving all chunks
+message UploadResponse {
+  // Whether upload was successful
+  bool success = 1;
+  
+  // Total bytes received
+  uint64 bytes_received = 2;
+  
+  // Final file path on server
+  string file_path = 3;
+  
+  // Error message if upload failed
+  string error_message = 4;
+}
