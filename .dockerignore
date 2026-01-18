@@ -1,0 +1,39 @@
+# Build artifacts
+build/
+cmake-build-*/
+out/
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Generated files
+*.pb.cc
+*.pb.h
+*.grpc.pb.cc
+*.grpc.pb.h
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Uploads (server will create in container)
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
